@@ -4,46 +4,51 @@ const booksContainer = document.getElementById('booksContainer');
 const readingListItems = document.getElementById('readingListItems');
 const toggleThemeBtn = document.getElementById('toggleThemeBtn');
 
-let readingList = [];
+const JSON_SERVER_URL = 'http://localhost:3001';
 
-async function fetchBooks(query = '') {
-  const response = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}`);
-  const data = await response.json();
-
-  const books = data.docs.map(book => ({
-  id: book.key,
-  title: book.title,
-  author: book.author_name ? book.author_name[0] : 'Unknown',
-  year: book.first_publish_year || 'N/A',
-  subjects: book.subject || [],
-  coverId: book.cover_i || null
-}));
-
+function fetchBooks(query) {
+  if (!query) query = 'fiction';
+  return fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=20`)
+    .then(res => res.json())
+    .then(data => data.docs.map(book => ({
+      id: book.key,
+      title: book.title,
+      author: book.author_name?.[0] || 'Unknown',
+      year: book.first_publish_year || 'N/A',
+      subjects: book.subject || [],
+      coverId: book.cover_i || null
+    })));
 
   return books.slice(0, 20); // Show up to 20 books
+
 }
 
-async function handleFetchAndRender() {
-  const query = searchInput.value.trim();
-  const genre = genreFilter.value;
+async function handleAddToList(bookId, books) {
+  const book = books.find(b => b.id === bookId);
+  const readingList = await fetchReadingList();
 
-  try {
-    const books = await fetchBooks(query);
-    const filteredBooks = genre
-      ? books.filter(book => book.subjects.includes(genre))
-      : books;
+  const alreadyInList = readingList.some(item => item.bookId === bookId);
+  if (alreadyInList) return;
 
-    renderBooks(filteredBooks);
-    addBookButtons(filteredBooks);
+  const userBook = {
+    bookId: book.id,
+    title: book.title,
+    author: book.author,
+    year: book.year,
+    status: 'Want to Read',
+    note: '',
+    rating: 0
+  };
 
-    if (filteredBooks.length === 0) {
-      booksContainer.innerHTML = `<p>No books found for your search.</p>`;
-    }
-  } catch (error) {
-    booksContainer.innerHTML = `<p>Error fetching books. Please try again later.</p>`;
-    console.error('Fetch error:', error);
-  }
+  await fetch(`${JSON_SERVER_URL}/readingList`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userBook)
+  });
+
+  updateReadingList(); 
 }
+
 
 function renderBooks(books) {
   booksContainer.innerHTML = '';
@@ -53,11 +58,16 @@ function renderBooks(books) {
       ? `https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`
       : 'https://via.placeholder.com/128x193?text=No+Cover';
 
+    const openLibraryUrl = `https://openlibrary.org${book.id}`;
+
     const card = document.createElement('article');
     card.className = 'book-card';
+
     card.innerHTML = `
-      <img src="${coverUrl}" alt="Cover of ${book.title}" class="book-cover">
-      <h3>${book.title}</h3>
+      <a href="${openLibraryUrl}" target="_blank" rel="noopener noreferrer">
+        <img src="${coverUrl}" alt="Cover of ${book.title}" class="book-cover">
+        <h3>${book.title}</h3>
+      </a>
       <p><strong>Author:</strong> ${book.author}</p>
       <p><strong>Year:</strong> ${book.year}</p>
       <button data-id="${book.id}" class="add-to-list-btn">Add to Reading List</button>
@@ -67,22 +77,60 @@ function renderBooks(books) {
   });
 }
 
-function handleAddToList(bookId, books) {
-  const book = books.find(b => b.id === bookId);
-  const exists = readingList.find(item => item.id === bookId);
-
-  if (!exists) {
-    readingList.push(book);
-    updateReadingList();
-  }
+function fetchReadingList() {
+  return fetch(`${JSON_SERVER_URL}/readingList`)
+    .then(res => res.json());
 }
 
-function updateReadingList() {
+function updateBook(id, updatedFields) {
+  return fetch(`${JSON_SERVER_URL}/readingList/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedFields)
+  });
+}
+
+async function updateReadingList() {
+  const readingList = await fetchReadingList();
   readingListItems.innerHTML = '';
 
   readingList.forEach(book => {
     const li = document.createElement('li');
-    li.textContent = `${book.title} by ${book.author}`;
+    li.innerHTML = `
+      <strong>${book.title}</strong> by ${book.author} (${book.year})<br/>
+      <label>Status:
+        <select class="status-select">
+          <option ${book.status === 'Want to Read' ? 'selected' : ''}>Want to Read</option>
+          <option ${book.status === 'Reading' ? 'selected' : ''}>Reading</option>
+          <option ${book.status === 'Finished' ? 'selected' : ''}>Finished</option>
+        </select>
+      </label><br/>
+      <label>Note:<br/>
+        <textarea class="note-input" rows="2">${book.note}</textarea>
+      </label><br/>
+      <label>Rating:
+        <input type="number" class="rating-input" value="${book.rating}" min="0" max="5" />
+      </label><br/>
+      <button class="remove-btn">Remove</button>
+    `;
+
+    li.querySelector('.status-select').addEventListener('change', (e) => {
+      updateBook(book.id, { status: e.target.value });
+    });
+
+    li.querySelector('.note-input').addEventListener('input', (e) => {
+      updateBook(book.id, { note: e.target.value });
+    });
+
+    li.querySelector('.rating-input').addEventListener('input', (e) => {
+      updateBook(book.id, { rating: parseInt(e.target.value) });
+    });
+
+    li.querySelector('.remove-btn').addEventListener('click', () => {
+      fetch(`${JSON_SERVER_URL}/readingList/${book.id}`, { method: 'DELETE' })
+        .then(() => updateReadingList());
+    });
+
     readingListItems.appendChild(li);
   });
 }
@@ -126,5 +174,7 @@ function debounce(fn, delay) {
 function init() {
   handleFetchAndRender();
   setupEventListeners();
+  updateReadingList();
 }
+
 init();
