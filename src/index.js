@@ -6,32 +6,33 @@ const toggleThemeBtn = document.getElementById('toggleThemeBtn');
 
 const JSON_SERVER_URL = 'http://localhost:3001';
 
-function fetchBooks(query, genre) {
-  if (genre) {
-    return fetch(`https://openlibrary.org/subjects/${genre.toLowerCase()}.json?limit=20`)
+function fetchBooks(query, genre, customGenre) {
+  const selectedGenre = customGenre || genre;
+
+  if (selectedGenre) {
+    return fetch(`https://openlibrary.org/subjects/${selectedGenre.toLowerCase().replace(/\s+/g, '_')}.json?limit=20`)
       .then(res => res.json())
       .then(data => data.works.map(book => ({
         id: book.key,
         title: book.title,
         author: book.authors?.[0]?.name || 'Unknown',
         year: book.first_publish_year || 'N/A',
-        subjects: [genre],
+        subjects: [selectedGenre],
         coverId: book.cover_id || null
       })));
-  } else {
-  
-    const fallbackQuery = query || 'fiction';
-    return fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(fallbackQuery)}&limit=20`)
-      .then(res => res.json())
-      .then(data => data.docs.map(book => ({
-        id: book.key,
-        title: book.title,
-        author: book.author_name?.[0] || 'Unknown',
-        year: book.first_publish_year || 'N/A',
-        subjects: book.subject || [],
-        coverId: book.cover_i || null
-      })));
   }
+
+  const fallbackQuery = query || 'fiction';
+  return fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(fallbackQuery)}&limit=20`)
+    .then(res => res.json())
+    .then(data => data.docs.map(book => ({
+      id: book.key,
+      title: book.title,
+      author: book.author_name?.[0] || 'Unknown',
+      year: book.first_publish_year || 'N/A',
+      subjects: book.subject || [],
+      coverId: book.cover_i || null
+    })));
 
   return books.slice(0, 20); // Show up to 20 books
 
