@@ -9,21 +9,32 @@
     <body>
 
         <header>
-            <div class="logo-title-container">
-                <h1>Beyond the Cover</h1>
-            </div>
-            <button id="toggle-theme">🌓</button>
-        </header>
+            <h1>Beyond the Cover</h1>
+            <div class="controls">
+     <input type="text" id="searchInput" placeholder="Search by title or author" />
+        <select id="genreFilter">
+            <option value="">All Genres</option>
+            <option value="Fantasy">Fantasy</option>
+            <option value="Romance">Romance</option>
+            <option value="Science Fiction">Science Fiction</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Horror">Horror</option>
+      </select>
+      <button id="toggleThemeBtn">🌙</button>
+    </div>
+  </header>
 
-        <div class="controls">
-            <input type="text" id="search" placeholder="Search books...">
-        </div>
+   <main>
+    <section id="booksContainer">
+    </section>
 
-        <div class="container">
-            <aside id="post-list"></aside>
-            <main id="post-detail">Select a post to view its details</main>
-        </div>
-
+    <aside id="readingList">
+      <h2>Your Reading List</h2>
+      <ul id="readingListItems">
+      </ul>
+    </aside>
+  </main>
+  
         <footer id="main-footer">
         <p>&copy; 2025 Beyond the Cover | Your cozy corner for literature 🌟</p>
         </footer>
