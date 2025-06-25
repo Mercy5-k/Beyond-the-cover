@@ -6,7 +6,7 @@ const toggleThemeBtn = document.getElementById('toggleThemeBtn');
 
 const JSON_SERVER_URL = 'http://localhost:3001';
 
-function fetchBooks(query, genre, customGenre) {
+function fetchBooks(query, genre, customGenre = '') {
   const selectedGenre = customGenre || genre;
 
   if (selectedGenre) {
@@ -34,8 +34,11 @@ function fetchBooks(query, genre, customGenre) {
       coverId: book.cover_i || null
     })));
 
-  return books.slice(0, 20); // Show up to 20 books
+}
 
+
+function fetchReadingList() {
+  return fetch(`${JSON_SERVER_URL}/readingList`).then(res => res.json());
 }
 
 async function handleAddToList(bookId, books) {
@@ -61,11 +64,11 @@ async function handleAddToList(bookId, books) {
     body: JSON.stringify(userBook)
   });
 
-  updateReadingList(); 
+  updateReadingList();
+  handleFetchAndRender();
 }
 
-
-function renderBooks(books) {
+function renderBooks(books, readingList = []) {
   booksContainer.innerHTML = '';
 
   books.forEach(book => {
@@ -88,14 +91,20 @@ function renderBooks(books) {
       <button data-id="${book.id}" class="add-to-list-btn">Add to Reading List</button>
     `;
 
+    const alreadyInList = readingList.some(item => item.bookId === book.id);
+    if (alreadyInList) {
+      const btn = card.querySelector('.add-to-list-btn');
+      btn.textContent = 'In Reading List';
+      btn.disabled = true;
+    }
+
     booksContainer.appendChild(card);
   });
+
+  addBookButtons(books);
 }
 
-function fetchReadingList() {
-  return fetch(`${JSON_SERVER_URL}/readingList`)
-    .then(res => res.json());
-}
+
 
 function updateBook(id, updatedFields) {
   return fetch(`${JSON_SERVER_URL}/readingList/${id}`, {
@@ -153,21 +162,10 @@ async function updateReadingList() {
 function setupEventListeners() {
   searchInput.addEventListener('input', debounce(handleFetchAndRender, 500));
   genreFilter.addEventListener('change', handleFetchAndRender);
-
   toggleThemeBtn.addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
   });
 }
-
-  genreFilter.addEventListener('change', async () => {
-    const query = searchInput.value;
-    const genre = genreFilter.value;
-    const books = await fetchBooks(query, genre);
-    const filtered = genre ? books.filter(b => b.subjects.includes(genre)) : books;
-    renderBooks(filtered);
-    addBookButtons(filtered);
-  });
-
 
 function addBookButtons(currentBooks) {
   document.querySelectorAll('.add-to-list-btn').forEach(button => {
@@ -186,7 +184,55 @@ function debounce(fn, delay) {
   };
 }
 
+function formatGenreName(slug) {
+  return slug.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function populateGenreDropdown() {
+  const genreFilter = document.getElementById('genreFilter');
+  genreFilter.innerHTML = '<option value="">All Genres</option>';
+
+  const popularGenres = [
+    'fantasy', 'science_fiction', 'romance', 'mystery',
+    'thriller', 'horror', 'historical_fiction', 'young_adult',
+    'children', 'adventure', 'poetry', 'history', 'nonfiction', 'classics'
+  ];
+
+  popularGenres.forEach(slug => {
+    const option = document.createElement('option');
+    option.value = slug;
+    option.textContent = formatGenreName(slug);
+    genreFilter.appendChild(option);
+  });
+}
+
+async function handleFetchAndRender() {
+  const query = searchInput.value.trim();
+  const genre = genreFilter.value;
+  const customGenre = document.getElementById('customGenre')?.value.trim();
+
+  console.log('Fetching books with:', { query, genre, customGenre });
+const fetchBooksPromise = fetchBooks(query, genre, customGenre);
+const fetchListPromise = fetchReadingList();
+
+console.log('fetchBooks returns:', fetchBooksPromise);
+
+  try {
+    const [books, readingList] = await Promise.all([
+      fetchBooks(query, genre, customGenre),
+      fetchReadingList()
+    ]);
+
+    renderBooks(books, readingList);
+  } catch (error) {
+    console.error('Error:', error);
+    booksContainer.innerHTML = `<p>Failed to load books. Try again later.</p>`;
+  }
+}
+
+
 function init() {
+  populateGenreDropdown();
   handleFetchAndRender();
   setupEventListeners();
   updateReadingList();

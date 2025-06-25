@@ -7,21 +7,14 @@
   --button-text: grey;
 }
 
-body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: background-color 0.3s, color 0.3s;
+body.dark-mode {
+  background-color: rgb(18, 18, 18);
+  color: white;
 }
 
-body.dark-mode {
-  --bg-color: rgb(30, 30, 30);
-  --text-color: rgb(224, 224, 224);
-  --accent-color: rgb(255, 255, 255);
-  --card-bg: rgb(42, 42, 42);
-  --button-bg: rgb(68, 68, 68)
-  --button-text: greyish;
+body.dark-mode .book-card {
+  background-color: rgb(30, 30, 30);
+  color: rgb(204, 204, 204);
 }
 
 header {
