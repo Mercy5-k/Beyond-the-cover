@@ -21,6 +21,28 @@ async function fetchBooks(query = '') {
   return books.slice(0, 20); // Show up to 20 books
 }
 
+async function handleFetchAndRender() {
+  const query = searchInput.value.trim();
+  const genre = genreFilter.value;
+
+  try {
+    const books = await fetchBooks(query);
+    const filteredBooks = genre
+      ? books.filter(book => book.subjects.includes(genre))
+      : books;
+
+    renderBooks(filteredBooks);
+    addBookButtons(filteredBooks);
+
+    if (filteredBooks.length === 0) {
+      booksContainer.innerHTML = `<p>No books found for your search.</p>`;
+    }
+  } catch (error) {
+    booksContainer.innerHTML = `<p>Error fetching books. Please try again later.</p>`;
+    console.error('Fetch error:', error);
+  }
+}
+
 function renderBooks(books) {
   booksContainer.innerHTML = '';
 
@@ -59,14 +81,13 @@ function updateReadingList() {
 }
 
 function setupEventListeners() {
-  searchInput.addEventListener('input', async () => {
-    const query = searchInput.value;
-    const genre = genreFilter.value;
-    const books = await fetchBooks(query);
-    const filtered = genre ? books.filter(b => b.subjects.includes(genre)) : books;
-    renderBooks(filtered);
-    addBookButtons(filtered);
+  searchInput.addEventListener('input', debounce(handleFetchAndRender, 500));
+  genreFilter.addEventListener('change', handleFetchAndRender);
+
+  toggleThemeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
   });
+}
 
   genreFilter.addEventListener('change', async () => {
     const query = searchInput.value;
@@ -77,10 +98,6 @@ function setupEventListeners() {
     addBookButtons(filtered);
   });
 
-  toggleThemeBtn.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-  });
-}
 
 function addBookButtons(currentBooks) {
   document.querySelectorAll('.add-to-list-btn').forEach(button => {
@@ -91,11 +108,16 @@ function addBookButtons(currentBooks) {
   });
 }
 
-async function init() {
-  const books = await fetchBooks('bestsellers');
-  renderBooks(books);
-  addBookButtons(books);
-  setupEventListeners();
+function debounce(fn, delay) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), delay);
+  };
 }
 
+function init() {
+  handleFetchAndRender();
+  setupEventListeners();
+}
 init();

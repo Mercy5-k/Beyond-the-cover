@@ -1,0 +1,135 @@
+:root {
+  background-color: white;
+  --text-color: rgb(34, 34, 34);
+  --accent-color: rgba(199, 133, 63, 0.484);
+  --card-bg: rgb(245, 245, 245);
+  --button-bg:rgb(245, 245, 245)
+  --button-text: grey;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+  --bg-color: rgb(30, 30, 30);
+  --text-color: rgb(224, 224, 224);
+  --accent-color: rgb(255, 255, 255);
+  --card-bg: rgb(42, 42, 42);
+  --button-bg: rgb(68, 68, 68)
+  --button-text: greyish;
+}
+
+header {
+  padding: 1rem;
+  background-color: var(--accent-color);
+  color: black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.controls {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+input, select, button {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: none;
+}
+
+input, select {
+  background-color: rgb(255, 255, 255);
+  color: rgb(0, 0, 0);
+}
+
+button {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+main {
+  display: flex;
+  padding: 1rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+#booksContainer {
+  flex: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+#readingList {
+  flex: 1;
+  background-color: var(--card-bg);
+  padding: 1rem;
+  border-radius: 8px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.book-card {
+  background-color: var(--card-bg);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.book-card h3 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+
+.book-card p {
+  margin: 0.25rem 0;
+}
+
+.book-card button {
+  margin-top: 0.5rem;
+}
+
+#readingList h2 {
+  margin-top: 0;
+}
+
+#readingListItems {
+  list-style: none;
+  padding: 0;
+}
+
+#readingListItems li {
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgb(204, 204, 204);
+}
+
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+  }
+
+  #booksContainer {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
