@@ -161,7 +161,7 @@ function setupEventListeners() {
   genreFilter.addEventListener('change', async () => {
     const query = searchInput.value;
     const genre = genreFilter.value;
-    const books = await fetchBooks(query);
+    const books = await fetchBooks(query, genre);
     const filtered = genre ? books.filter(b => b.subjects.includes(genre)) : books;
     renderBooks(filtered);
     addBookButtons(filtered);
