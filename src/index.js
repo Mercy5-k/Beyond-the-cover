@@ -11,12 +11,14 @@ async function fetchBooks(query = '') {
   const data = await response.json();
 
   const books = data.docs.map(book => ({
-    id: book.key,
-    title: book.title,
-    author: book.author_name ? book.author_name[0] : 'Unknown',
-    year: book.first_publish_year || 'N/A',
-    subjects: book.subject || []
-  }));
+  id: book.key,
+  title: book.title,
+  author: book.author_name ? book.author_name[0] : 'Unknown',
+  year: book.first_publish_year || 'N/A',
+  subjects: book.subject || [],
+  coverId: book.cover_i || null
+}));
+
 
   return books.slice(0, 20); // Show up to 20 books
 }
@@ -47,9 +49,14 @@ function renderBooks(books) {
   booksContainer.innerHTML = '';
 
   books.forEach(book => {
+    const coverUrl = book.coverId
+      ? `https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`
+      : 'https://via.placeholder.com/128x193?text=No+Cover';
+
     const card = document.createElement('article');
     card.className = 'book-card';
     card.innerHTML = `
+      <img src="${coverUrl}" alt="Cover of ${book.title}" class="book-cover">
       <h3>${book.title}</h3>
       <p><strong>Author:</strong> ${book.author}</p>
       <p><strong>Year:</strong> ${book.year}</p>

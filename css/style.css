@@ -109,6 +109,15 @@ main {
   margin-top: 0.5rem;
 }
 
+.book-cover {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
 #readingList h2 {
   margin-top: 0;
 }
