@@ -7,50 +7,46 @@ const toggleThemeBtn = document.getElementById('toggleThemeBtn');
 const JSON_SERVER_URL = 'http://localhost:3000';
 
 function fetchBooks(query, genre = '') {
-  if (genre) {
-    const subjectUrl = `https://openlibrary.org/subjects/${genre.toLowerCase().replace(/\s+/g, '_')}.json?limit=20`;
-    console.log(`Fetching subject: ${subjectUrl}`);
+  // Build search terms
+  const terms = [];
+  if (query) terms.push(query);
+  if (genre) terms.push(`subject:${genre}`);
 
-    return fetch(subjectUrl)
-      .then(res => res.json())
-      .then(data => data.works.map(book => ({
-        id: book.key,
-        title: book.title,
-        author: book.authors?.[0]?.name || 'Unknown',
-        year: book.first_publish_year || 0,
-        subjects: [genre],
-        coverId: book.cover_id || null,
-        editionCount: book.edition_count || 0, // proxy for popularity
-        rating: book.rating?.average || 0       // optional, rarely available
-      })));
-  }
+  const qs = terms.join(' ');
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(qs)}&limit=100`;
 
-  const fallbackQuery = query || 'fiction';
-  const searchUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(fallbackQuery)}&limit=20`;
-  console.log(`Searching books by query: ${searchUrl}`);
-
-  return fetch(searchUrl)
+  return fetch(url)
     .then(res => res.json())
-    .then(data => data.docs.map(book => ({
-      id: book.key,
-      title: book.title,
-      author: book.author_name?.[0] || 'Unknown',
-      year: book.first_publish_year || 0,
-      subjects: book.subject || [],
-      coverId: book.cover_i || null,
-      editionCount: book.edition_count || 0,
-      rating: book.ratings_average || 0
-    })));
+    .then(data =>
+      data.docs
+        //.filter(doc => doc.first_publish_year) // you can keep this or remove it
+        //.filter(doc => doc.first_publish_year >= yearFrom && doc.first_publish_year <= yearTo) // remove this
+        .map(doc => ({
+          id: doc.key,
+          title: doc.title,
+          author: doc.author_name?.[0] || 'Unknown',
+          year: doc.first_publish_year,
+          subjects: doc.subject || [],
+          coverId: doc.cover_i || null,
+        }))
+    );
+}
+
+function sortBooksByYear(books, sortOrder) {
+  if (sortOrder === 'newest') {
+    return books.sort((a, b) => b.year - a.year);
+  } else if (sortOrder === 'oldest') {
+    return books.sort((a, b) => a.year - b.year);
+  }
+  return books;
 }
 
 async function handleFetchAndRender() {
-  booksContainer.innerHTML = '<p>Loading...</p>'; // add this
+  booksContainer.innerHTML = '<p>Loading...</p>';
 
   const query = searchInput.value.trim();
   const genre = genreFilter.value;
-  const sortOrder = document.getElementById('sortBy')?.value || 'newest';
-  const yearFrom = parseInt(document.getElementById('yearFrom')?.value) || 0;
-  const yearTo = parseInt(document.getElementById('yearTo')?.value) || 9999;
+  const sortOrder = document.getElementById('sortByYear').value;
 
   try {
     const [books, readingList] = await Promise.all([
@@ -58,23 +54,13 @@ async function handleFetchAndRender() {
       fetchReadingList()
     ]);
 
-  const filteredBooks = books
-  .filter(book => book.year && !isNaN(book.year))
-  .filter(book => book.year >= yearFrom && book.year <= yearTo);
-  
-    const sortedBooks = sortBooks(filteredBooks, sortOrder);
-    renderBooks(sortedBooks, readingList);
-  } catch (error) {
-    console.error('Error:', error);
+    const sorted = sortBooksByYear(books, sortOrder);
+    renderBooks(sorted, readingList);
+  } catch (e) {
+    console.error(e);
     booksContainer.innerHTML = `<p>Failed to load books. Try again later.</p>`;
   }
 }
-
-
-const currentYear = new Date().getFullYear();
-document.getElementById('yearFrom').value = currentYear;
-document.getElementById('yearTo').value = currentYear;
-
 
 function fetchReadingList() {
   return fetch(`${JSON_SERVER_URL}/readingList`).then(res => res.json());
@@ -243,49 +229,8 @@ function populateGenreDropdown() {
   });
 }
 
- function sortBooks(books, sortBy) {
-  switch (sortBy) {
-    case 'newest':
-      return books.sort((a, b) => b.year - a.year);
-    case 'oldest':
-      return books.sort((a, b) => a.year - b.year);
-    case 'popular':
-      return books.sort((a, b) => b.editionCount - a.editionCount);
-    case 'rating':
-      return books.sort((a, b) => b.rating - a.rating);
-    default:
-      return books;
-  }
-}
-
-
-function populateYearDropdowns() {
-  const currentYear = new Date().getFullYear();
-  const startYear = 1430;
-
-  const yearFrom = document.getElementById('yearFrom');
-  const yearTo = document.getElementById('yearTo');
-
-  for (let year = currentYear; year >= startYear; year--) {
-    const optionFrom = document.createElement('option');
-    optionFrom.value = year;
-    optionFrom.textContent = year;
-    yearFrom.appendChild(optionFrom);
-
-    const optionTo = document.createElement('option');
-    optionTo.value = year;
-    optionTo.textContent = year;
-    yearTo.appendChild(optionTo);
-  }
-
-  // Set default values
-  yearFrom.value = startYear;
-  yearTo.value = currentYear;
-}
-
 function init() {
   populateGenreDropdown();
-  populateYearDropdowns();
   handleFetchAndRender();
   setupEventListeners();
   updateReadingList();
