@@ -1,7 +1,22 @@
 {
   "user":[],
-  "readingList": []
+  "readingList": [
+    {
+      "id": 1,
+      "userId": 1,
+      "bookId": "/works/OL12345W",
+      "title": "The Housemaid",
+      "author": "Freida McFadden",
+      "year": 2022,
+      "status": "Want to Read",
+      "note": "",
+      "rating": 0
+    }
+  ]
 }
+
+
+
 
 
 
