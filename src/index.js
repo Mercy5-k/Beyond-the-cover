@@ -4,13 +4,11 @@ const booksContainer = document.getElementById('booksContainer');
 const readingListItems = document.getElementById('readingListItems');
 const toggleThemeBtn = document.getElementById('toggleThemeBtn');
 
-const JSON_SERVER_URL = 'http://localhost:3001';
+const JSON_SERVER_URL = 'http://localhost:3000';
 
-function fetchBooks(query, genre, customGenre = '') {
-  const selectedGenre = customGenre || genre;
-
-  if (selectedGenre) {
-    const subjectUrl = `https://openlibrary.org/subjects/${selectedGenre.toLowerCase().replace(/\s+/g, '_')}.json?limit=20`;
+function fetchBooks(query, genre = '') {
+  if (genre) {
+    const subjectUrl = `https://openlibrary.org/subjects/${genre.toLowerCase().replace(/\s+/g, '_')}.json?limit=20`;
     console.log(`Fetching subject: ${subjectUrl}`);
 
     return fetch(subjectUrl)
@@ -45,6 +43,15 @@ function fetchBooks(query, genre, customGenre = '') {
       }))
       .sort((a, b) => b.year - a.year) // Newest first
     );
+}
+
+function sortBooks(books, sortOption) {
+  if (sortOption === 'newest') {
+    return books.sort((a, b) => b.year - a.year);
+  } else if (sortOption === 'oldest') {
+    return books.sort((a, b) => a.year - b.year);
+  }
+  return books;
 }
 
 function fetchReadingList() {
@@ -212,30 +219,6 @@ function populateGenreDropdown() {
     option.textContent = formatGenreName(slug);
     genreFilter.appendChild(option);
   });
-}
-
-async function handleFetchAndRender() {
-const customGenreInput = document.getElementById('customGenre')?.value.trim();
-const useCustomGenre = customGenreInput !== '';
-
-const genre = useCustomGenre ? '' : genreFilter.value;
-const customGenre = useCustomGenre ? customGenreInput : '';
-
- const query = searchInput.value.trim();
-
-console.log('Fetching books with:', { query, genre, customGenre });
-
-  try {
-    const [books, readingList] = await Promise.all([
-   fetchBooks(query, genre, customGenre),
-   fetchReadingList()
-]);
-
-    renderBooks(books, readingList);
-  } catch (error) {
-    console.error('Error:', error);
-    booksContainer.innerHTML = `<p>Failed to load books. Try again later.</p>`;
-  }
 }
 
 
