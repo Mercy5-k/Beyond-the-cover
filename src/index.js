@@ -1,17 +1,20 @@
 const searchInput = document.getElementById('searchInput');
 const genreFilter = document.getElementById('genreFilter');
 const booksContainer = document.getElementById('booksContainer');
+const trendingBooksContainer = document.getElementById('trendingBooksContainer');
 const readingListItems = document.getElementById('readingListItems');
 const toggleThemeBtn = document.getElementById('toggleThemeBtn');
 
 const JSON_SERVER_URL = 'http://localhost:3000';
 
 function fetchBooks(query, genre = '') {
-  // Build search terms
   const terms = [];
   if (query) terms.push(query);
   if (genre) terms.push(`subject:${genre}`);
 
+   if (terms.length === 0) {
+    terms.push('the');
+  }
   const qs = terms.join(' ');
   const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(qs)}&limit=100`;
 
@@ -19,9 +22,7 @@ function fetchBooks(query, genre = '') {
     .then(res => res.json())
     .then(data =>
       data.docs
-        //.filter(doc => doc.first_publish_year) // you can keep this or remove it
-        //.filter(doc => doc.first_publish_year >= yearFrom && doc.first_publish_year <= yearTo) // remove this
-        .map(doc => ({
+              .map(doc => ({
           id: doc.key,
           title: doc.title,
           author: doc.author_name?.[0] || 'Unknown',
@@ -29,6 +30,27 @@ function fetchBooks(query, genre = '') {
           subjects: doc.subject || [],
           coverId: doc.cover_i || null,
         }))
+    );
+}
+
+function fetchTrendingBooks() {
+  const trendingKeywords = ['bestseller', 'popular'];
+  const randomKeyword = trendingKeywords[Math.floor(Math.random() * trendingKeywords.length)];
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(randomKeyword)}&limit=20`;
+
+  console.log('Fetching trending books from:', url);
+
+  return fetch(url)
+    .then(res => res.json())
+    .then(data =>
+      data.docs.map(doc => ({
+        id: doc.key,
+        title: doc.title,
+        author: doc.author_name?.[0] || 'Unknown',
+        year: doc.first_publish_year,
+        subjects: doc.subject || [],
+        coverId: doc.cover_i || null,
+      }))
     );
 }
 
@@ -42,25 +64,65 @@ function sortBooksByYear(books, sortOrder) {
 }
 
 async function handleFetchAndRender() {
-  booksContainer.innerHTML = '<p>Loading...</p>';
 
-  const query = searchInput.value.trim();
+  booksContainer.innerHTML = '<p>Loading...</p>';
+  trendingBooksContainer.innerHTML = '<p>Loading trending books...</p>';
+
+  let query = searchInput.value.trim();
   const genre = genreFilter.value;
   const sortOrder = document.getElementById('sortByYear').value;
 
   try {
-    const [books, readingList] = await Promise.all([
+    const [books, , readingList] = await Promise.all([
       fetchBooks(query, genre),
+      fetchTrendingBooks(),
       fetchReadingList()
     ]);
+    
+    console.log('Fetched books:', books.length);
+    console.log('Reading list:', readingList.length);
 
     const sorted = sortBooksByYear(books, sortOrder);
     renderBooks(sorted, readingList);
   } catch (e) {
     console.error(e);
     booksContainer.innerHTML = `<p>Failed to load books. Try again later.</p>`;
+    trendingBooksContainer.innerHTML = `<p>Failed to load trending books.</p>`;
   }
 }
+
+async function renderTrendingBooks() {
+  const trendingBooksContainer = document.getElementById('trendingBooksContainer');
+  trendingBooksContainer.innerHTML = '<p>Loading trending books...</p>';
+
+  try {
+    const trendingBooks = await fetchTrendingBooks();
+    trendingBooksContainer.innerHTML = '';
+
+    trendingBooks.forEach(book => {
+      const coverUrl = book.coverId
+        ? `https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`
+        : 'https://via.placeholder.com/128x193?text=No+Cover';
+
+      const card = document.createElement('div');
+      card.className = 'book-card';
+
+      card.innerHTML = `
+        <img src="${coverUrl}" alt="${book.title} cover">
+        <h4>${book.title}</h4>
+        <p>${book.author}</p>
+        <p>${book.year || 'N/A'}</p>
+      `;
+
+      trendingBooksContainer.appendChild(card);
+    });
+  } catch (error) {
+    console.error('Failed to load trending books:', error);
+    trendingBooksContainer.innerHTML = '<p>Could not load trending books. Try again later.</p>';
+  }
+}
+
+
 
 function fetchReadingList() {
   return fetch(`${JSON_SERVER_URL}/readingList`).then(res => res.json());
@@ -234,6 +296,7 @@ function init() {
   handleFetchAndRender();
   setupEventListeners();
   updateReadingList();
+  renderTrendingBooks();
 }
 
 init();
