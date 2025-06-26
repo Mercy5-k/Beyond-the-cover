@@ -215,21 +215,20 @@ function populateGenreDropdown() {
 }
 
 async function handleFetchAndRender() {
- const query = searchInput.value.trim();
 const customGenreInput = document.getElementById('customGenre')?.value.trim();
 const useCustomGenre = customGenreInput !== '';
 
 const genre = useCustomGenre ? '' : genreFilter.value;
 const customGenre = useCustomGenre ? customGenreInput : '';
 
+ const query = searchInput.value.trim();
 
 console.log('Fetching books with:', { query, genre, customGenre });
 
-
   try {
     const [books, readingList] = await Promise.all([
-  fetchBooks(query, genre, customGenre),
-  fetchReadingList()
+   fetchBooks(query, genre, customGenre),
+   fetchReadingList()
 ]);
 
     renderBooks(books, readingList);
