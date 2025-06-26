@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta charset="UFT-8">
+        <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Beyond the Cover</title>
         <link rel="stylesheet" href="./css/style.css">
@@ -30,10 +30,18 @@
           <option value="children">Children</option>
         </select>
 
-        <select id="sortOption">
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-        </select>
+        <label for="yearFrom">From:</label>
+        <select id="yearFrom"></select>
+        
+        <label for="yearTo">To:</label>
+        <select id="yearTo"></select>
+
+        <select id="sortBy">
+  <option value="newest">Newest</option>
+  <option value="oldest">Oldest</option>
+  <option value="popular">Most Popular</option>
+  <option value="rating">Highest Rated</option>
+</select>
 
       <button id="toggleThemeBtn">🌙</button>
     </div>

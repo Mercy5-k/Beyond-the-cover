@@ -13,17 +13,16 @@ function fetchBooks(query, genre = '') {
 
     return fetch(subjectUrl)
       .then(res => res.json())
-      .then(data => data.works
-        .map(book => ({
-          id: book.key,
-          title: book.title,
-          author: book.authors?.[0]?.name || 'Unknown',
-          year: book.first_publish_year || 0,
-          subjects: [selectedGenre],
-          coverId: book.cover_id || null
-        }))
-        .sort((a, b) => b.year - a.year) // Newest first
-      );
+      .then(data => data.works.map(book => ({
+        id: book.key,
+        title: book.title,
+        author: book.authors?.[0]?.name || 'Unknown',
+        year: book.first_publish_year || 0,
+        subjects: [genre],
+        coverId: book.cover_id || null,
+        editionCount: book.edition_count || 0, // proxy for popularity
+        rating: book.rating?.average || 0       // optional, rarely available
+      })));
   }
 
   const fallbackQuery = query || 'fiction';
@@ -32,27 +31,50 @@ function fetchBooks(query, genre = '') {
 
   return fetch(searchUrl)
     .then(res => res.json())
-    .then(data => data.docs
-      .map(book => ({
-        id: book.key,
-        title: book.title,
-        author: book.author_name?.[0] || 'Unknown',
-        year: book.first_publish_year || 0,
-        subjects: book.subject || [],
-        coverId: book.cover_i || null
-      }))
-      .sort((a, b) => b.year - a.year) // Newest first
-    );
+    .then(data => data.docs.map(book => ({
+      id: book.key,
+      title: book.title,
+      author: book.author_name?.[0] || 'Unknown',
+      year: book.first_publish_year || 0,
+      subjects: book.subject || [],
+      coverId: book.cover_i || null,
+      editionCount: book.edition_count || 0,
+      rating: book.ratings_average || 0
+    })));
 }
 
-function sortBooks(books, sortOption) {
-  if (sortOption === 'newest') {
-    return books.sort((a, b) => b.year - a.year);
-  } else if (sortOption === 'oldest') {
-    return books.sort((a, b) => a.year - b.year);
+async function handleFetchAndRender() {
+  booksContainer.innerHTML = '<p>Loading...</p>'; // add this
+
+  const query = searchInput.value.trim();
+  const genre = genreFilter.value;
+  const sortOrder = document.getElementById('sortBy')?.value || 'newest';
+  const yearFrom = parseInt(document.getElementById('yearFrom')?.value) || 0;
+  const yearTo = parseInt(document.getElementById('yearTo')?.value) || 9999;
+
+  try {
+    const [books, readingList] = await Promise.all([
+      fetchBooks(query, genre),
+      fetchReadingList()
+    ]);
+
+  const filteredBooks = books
+  .filter(book => book.year && !isNaN(book.year))
+  .filter(book => book.year >= yearFrom && book.year <= yearTo);
+  
+    const sortedBooks = sortBooks(filteredBooks, sortOrder);
+    renderBooks(sortedBooks, readingList);
+  } catch (error) {
+    console.error('Error:', error);
+    booksContainer.innerHTML = `<p>Failed to load books. Try again later.</p>`;
   }
-  return books;
 }
+
+
+const currentYear = new Date().getFullYear();
+document.getElementById('yearFrom').value = currentYear;
+document.getElementById('yearTo').value = currentYear;
+
 
 function fetchReadingList() {
   return fetch(`${JSON_SERVER_URL}/readingList`).then(res => res.json());
@@ -221,9 +243,49 @@ function populateGenreDropdown() {
   });
 }
 
+ function sortBooks(books, sortBy) {
+  switch (sortBy) {
+    case 'newest':
+      return books.sort((a, b) => b.year - a.year);
+    case 'oldest':
+      return books.sort((a, b) => a.year - b.year);
+    case 'popular':
+      return books.sort((a, b) => b.editionCount - a.editionCount);
+    case 'rating':
+      return books.sort((a, b) => b.rating - a.rating);
+    default:
+      return books;
+  }
+}
+
+
+function populateYearDropdowns() {
+  const currentYear = new Date().getFullYear();
+  const startYear = 1430;
+
+  const yearFrom = document.getElementById('yearFrom');
+  const yearTo = document.getElementById('yearTo');
+
+  for (let year = currentYear; year >= startYear; year--) {
+    const optionFrom = document.createElement('option');
+    optionFrom.value = year;
+    optionFrom.textContent = year;
+    yearFrom.appendChild(optionFrom);
+
+    const optionTo = document.createElement('option');
+    optionTo.value = year;
+    optionTo.textContent = year;
+    yearTo.appendChild(optionTo);
+  }
+
+  // Set default values
+  yearFrom.value = startYear;
+  yearTo.value = currentYear;
+}
 
 function init() {
   populateGenreDropdown();
+  populateYearDropdowns();
   handleFetchAndRender();
   setupEventListeners();
   updateReadingList();
