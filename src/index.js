@@ -10,32 +10,42 @@ function fetchBooks(query, genre, customGenre = '') {
   const selectedGenre = customGenre || genre;
 
   if (selectedGenre) {
-    return fetch(`https://openlibrary.org/subjects/${selectedGenre.toLowerCase().replace(/\s+/g, '_')}.json?limit=20`)
+    const subjectUrl = `https://openlibrary.org/subjects/${selectedGenre.toLowerCase().replace(/\s+/g, '_')}.json?limit=20`;
+    console.log(`Fetching subject: ${subjectUrl}`);
+
+    return fetch(subjectUrl)
       .then(res => res.json())
-      .then(data => data.works.map(book => ({
-        id: book.key,
-        title: book.title,
-        author: book.authors?.[0]?.name || 'Unknown',
-        year: book.first_publish_year || 'N/A',
-        subjects: [selectedGenre],
-        coverId: book.cover_id || null
-      })));
+      .then(data => data.works
+        .map(book => ({
+          id: book.key,
+          title: book.title,
+          author: book.authors?.[0]?.name || 'Unknown',
+          year: book.first_publish_year || 0,
+          subjects: [selectedGenre],
+          coverId: book.cover_id || null
+        }))
+        .sort((a, b) => b.year - a.year) // Newest first
+      );
   }
 
   const fallbackQuery = query || 'fiction';
-  return fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(fallbackQuery)}&limit=20`)
+  const searchUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(fallbackQuery)}&limit=20`;
+  console.log(`Searching books by query: ${searchUrl}`);
+
+  return fetch(searchUrl)
     .then(res => res.json())
-    .then(data => data.docs.map(book => ({
-      id: book.key,
-      title: book.title,
-      author: book.author_name?.[0] || 'Unknown',
-      year: book.first_publish_year || 'N/A',
-      subjects: book.subject || [],
-      coverId: book.cover_i || null
-    })));
-
+    .then(data => data.docs
+      .map(book => ({
+        id: book.key,
+        title: book.title,
+        author: book.author_name?.[0] || 'Unknown',
+        year: book.first_publish_year || 0,
+        subjects: book.subject || [],
+        coverId: book.cover_i || null
+      }))
+      .sort((a, b) => b.year - a.year) // Newest first
+    );
 }
-
 
 function fetchReadingList() {
   return fetch(`${JSON_SERVER_URL}/readingList`).then(res => res.json());
@@ -103,8 +113,6 @@ function renderBooks(books, readingList = []) {
 
   addBookButtons(books);
 }
-
-
 
 function updateBook(id, updatedFields) {
   return fetch(`${JSON_SERVER_URL}/readingList/${id}`, {
@@ -207,21 +215,22 @@ function populateGenreDropdown() {
 }
 
 async function handleFetchAndRender() {
-  const query = searchInput.value.trim();
-  const genre = genreFilter.value;
-  const customGenre = document.getElementById('customGenre')?.value.trim();
+ const query = searchInput.value.trim();
+const customGenreInput = document.getElementById('customGenre')?.value.trim();
+const useCustomGenre = customGenreInput !== '';
 
-  console.log('Fetching books with:', { query, genre, customGenre });
-const fetchBooksPromise = fetchBooks(query, genre, customGenre);
-const fetchListPromise = fetchReadingList();
+const genre = useCustomGenre ? '' : genreFilter.value;
+const customGenre = useCustomGenre ? customGenreInput : '';
 
-console.log('fetchBooks returns:', fetchBooksPromise);
+
+console.log('Fetching books with:', { query, genre, customGenre });
+
 
   try {
     const [books, readingList] = await Promise.all([
-      fetchBooks(query, genre, customGenre),
-      fetchReadingList()
-    ]);
+  fetchBooks(query, genre, customGenre),
+  fetchReadingList()
+]);
 
     renderBooks(books, readingList);
   } catch (error) {
