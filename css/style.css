@@ -161,6 +161,22 @@ button:focus {
   outline-offset: 2px;
 }
 
+.trending-card button {
+  margin-top: 8px;
+  background-color: rgb(92, 107, 192);
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.trending-card button:hover {
+  background-color: rgb(57, 73, 171);
+}
+
 main {
   display: flex;
   padding: 1rem;
@@ -171,15 +187,88 @@ main {
   z-index: 0;
 }
 
-#booksContainer,
 #trendingBooksContainer {
-  flex: 2;
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.trending-card {
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.trending-card img {
+  width: 20%;
+  height: 10px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.trending-card h4,
+.trending-card p {
+  margin: 4px 0;
+  line-height: 1.1;
+}
+
+@media (min-width: 768px) {
+  #trendingBooksContainer {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+#booksContainer {
+  flex: 2;
+  display:grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-#readingList {
+.book-card {
+  background-color: var(--card-bg);
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction:column;
+  justify-content: space-between;
+  transition: background-color 0.3s ease, color 0.3s ease;
+   color: var(--text-color);
+}
+
+.book-card h3 {
+  font-size: rem;
+  margin: 0 0 0.5rem;
+}
+
+.book-card p {
+  margin: 0.rem 0;
+}
+
+.book-card button {
+  margin-top: 0.1rem;
+  align-self: flex-start;
+}
+
+.book-cover {
+  width: 90%;
+  height: auto;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+ #readingList {
   flex: 1;
   background-color: var(--card-bg);
   padding: 1rem;
@@ -187,41 +276,6 @@ main {
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.book-card {
-  background-color: var(--card-bg);
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: background-color 0.3s ease, color 0.3s ease;
-   color: var(--text-color);
-}
-
-.book-card h3 {
-  font-size: 1.1rem;
-  margin: 0 0 0.5rem;
-}
-
-.book-card p {
-  margin: 0.25rem 0;
-}
-
-.book-card button {
-  margin-top: 0.5rem;
-  align-self: flex-start;
-}
-
-.book-cover {
-  width: 40%;
-  height: auto;
-  max-height: 200px;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
 }
 
 #readingList h2 {
@@ -259,20 +313,19 @@ main {
   }
 }
 
-  #booksContainer,
-  #trendingBooksContainer {
+  #booksContainer {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 
 html, body {
-  height: 100%;
+  height: 10%;
   margin: 0;
 }
 
 body {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 10vh;
 }
 
 main {

@@ -177,17 +177,18 @@ async function handleFetchAndRender() {
   const sortOrder = document.getElementById('sortByYear').value;
 
   try {
-    const [books, , readingList] = await Promise.all([
-      fetchBooks(query, genre),
-      fetchTrendingBooks(),
-      fetchReadingList(currentUser?.id)
-    ]);
-    
+    const [books, trendingBooks, readingList] = await Promise.all([
+  fetchBooks(query, genre),
+  fetchTrendingBooks(),
+  fetchReadingList(currentUser?.id)
+]);
+
     console.log('Fetched books:', books.length);
     console.log('Reading list:', readingList.length);
 
     const sorted = sortBooksByYear(books, sortOrder);
-    renderBooks(sorted, readingList);
+    renderBooks(sorted.slice(0, 30), readingList); 
+
   } catch (e) {
     console.error(e);
     booksContainer.innerHTML = `<p>Failed to load books. Try again later.</p>`;
@@ -195,37 +196,50 @@ async function handleFetchAndRender() {
   }
 }
 
-// Render trending books section with cards
-async function renderTrendingBooks() {
+// Render trending books section with cards//
+ async function renderTrendingBooks() {
   const trendingBooksContainer = document.getElementById('trendingBooksContainer');
   trendingBooksContainer.innerHTML = '<p>Loading trending books...</p>';
 
   try {
     const trendingBooks = await fetchTrendingBooks();
+    const readingList = await fetchReadingList(currentUser?.id);
     trendingBooksContainer.innerHTML = '';
 
-    trendingBooks.forEach(book => {
+    trendingBooks.slice(0, 30).forEach(book => {
       const coverUrl = book.coverId
         ? `https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`
         : 'https://via.placeholder.com/128x193?text=No+Cover';
 
-      const card = document.createElement('div');
+      const openLibraryUrl = `https://openlibrary.org${book.id}`;
+
+      const card = document.createElement('article');
       card.className = 'book-card';
 
+      const alreadyInList = readingList.some(item => item.bookId === book.id);
+
       card.innerHTML = `
-        <img src="${coverUrl}" alt="${book.title} cover">
-        <h4>${book.title}</h4>
-        <p>${book.author}</p>
-        <p>${book.year || 'N/A'}</p>
+        <a href="${openLibraryUrl}" target="_blank" rel="noopener noreferrer">
+          <img src="${coverUrl}" alt="Cover of ${book.title}" class="book-cover">
+          <h3>${book.title}</h3>
+        </a>
+        <p><strong>Author:</strong> ${book.author}</p>
+        <p><strong>Year:</strong> ${book.year}</p>
+        <button data-id="${book.id}" class="add-to-list-btn" ${alreadyInList ? 'disabled' : ''}>
+          ${alreadyInList ? 'In Reading List' : 'Add to Reading List'}
+        </button>
       `;
 
       trendingBooksContainer.appendChild(card);
     });
+
+    addBookButtons(trendingBooks);
   } catch (error) {
     console.error('Failed to load trending books:', error);
     trendingBooksContainer.innerHTML = '<p>Could not load trending books. Try again later.</p>';
   }
 }
+
 
 // Fetch the reading list for a specific user from backend
 function fetchReadingList(userId) {
