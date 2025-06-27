@@ -1,59 +1,145 @@
 :root {
-  background-color: white;
+  background-color: transparent;
   --text-color: rgb(34, 34, 34);
   --accent-color: rgba(199, 133, 63, 0.484);
-  --card-bg: rgb(245, 245, 245);
-  --button-bg:rgb(245, 245, 245)
+  --card-bg: rgba(245, 245, 245, 0.8);
+  --button-bg:rgba(245, 245, 245, 0.7)
   --button-text: grey;
+  --input-bg: rgba(255, 255, 255, 0.8);
+  --input-text-color:var(--text-color);
+}
+
+body {
+  background-image: url('../assets/background.jpg');
+  background-size: cover;           
+  background-position: center;   
+  background-repeat: no-repeat;  
+  background-attachment: fixed;     
+
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+  position: relative;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
 }
 
 body.dark-mode {
-  background-color: rgb(18, 18, 18);
-  color: white;
+  --background-color: transparent;
+  --text-color: rgb(238, 238, 238);
+  --card-bg: rgba(30, 30, 30, 0.85); 
+  --button-bg: rgba(68, 68, 68, 0.75);
+  --button-text: rgb(221, 221, 221);
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
-body.dark-mode .book-card {
-  background-color: rgb(30, 30, 30);
-  color: rgb(204, 204, 204);
-}
-
-header {
-  padding: 1rem;
-  background-color: var(--accent-color);
-  color: black;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.controls {
-  margin-top: 1rem;
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-input, select, button {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border-radius: 5px;
-  border: none;
-}
-
-input, select {
-  background-color: rgb(255, 255, 255);
-  color: rgb(0, 0, 0);
+.book-card {
+  background-color: var(--card-bg);
+  
 }
 
 button {
   background-color: var(--button-bg);
   color: var(--button-text);
+  border: none;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+input, select {
+  background-color: var(--input-bg);
+  color: var(--input-text-color);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--accent-color);
+  border-radius: 50px;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  flex: 1;
+}
+
+main {
+  background-color: transparent;
+}
+
+.controls {
+  flex: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-buttons {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+input, select, button {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s ease;
+  outline-offset: 2px;
+  height: 2.5rem;    
+  box-sizing: border-box;
+}
+
+
+input, select {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid rgba(0,0,0,0.2);
+  background-color: var(--input-bg);
+  color: var(--input-text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 4px var(--accent-color);
+  outline: none;
+}
+
+button {
+ padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: none;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  cursor: pointer;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 
 button:hover {
   opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 main {
@@ -61,12 +147,16 @@ main {
   padding: 1rem;
   gap: 2rem;
   flex-wrap: wrap;
+  background-color: transparent;
+  position: relative;
+  z-index: 0;
 }
 
-#booksContainer {
+#booksContainer,
+#trendingBooksContainer {
   flex: 2;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
 }
 
@@ -77,6 +167,7 @@ main {
   border-radius: 8px;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .book-card {
@@ -87,6 +178,8 @@ main {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  transition: background-color 0.3s ease, color 0.3s ease;
+   color: var(--text-color);
 }
 
 .book-card h3 {
@@ -100,10 +193,11 @@ main {
 
 .book-card button {
   margin-top: 0.5rem;
+  align-self: flex-start;
 }
 
 .book-cover {
-  width: 100%;
+  width: 40%;
   height: auto;
   max-height: 200px;
   object-fit: cover;
@@ -118,20 +212,51 @@ main {
 #readingListItems {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 #readingListItems li {
   margin-bottom: 0.5rem;
   padding: 0.25rem 0;
   border-bottom: 1px solid rgb(204, 204, 204);
+  cursor: default;
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+.hidden {
+  display: none;
 }
 
 @media (max-width: 768px) {
-  main {
+  header {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  #booksContainer {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  .auth-buttons {
+    justify-content: center;
+    margin-top: 0.5rem;
   }
+}
+
+  #booksContainer,
+  #trendingBooksContainer {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); 
+  display: none; 
+  z-index: 9999; 
+  backdrop-filter: blur(5px); 
+}
+
+#overlay.active {
+  display: block;
 }
