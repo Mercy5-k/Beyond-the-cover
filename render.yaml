@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: beyond-the-cover-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    branch: main
