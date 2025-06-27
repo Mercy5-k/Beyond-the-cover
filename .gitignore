@@ -1,0 +1,19 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional log files
+*.log
+
+# dotenv environment files
+.env
+.env.local
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Render or deployment cache (if any)
+render.yaml.lock
