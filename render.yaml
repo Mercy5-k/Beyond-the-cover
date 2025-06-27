@@ -1,9 +1,10 @@
 services:
   - type: web
     name: beyond-the-cover-api
-    runtime: node
-    plan: free
-    region: oregon
+    env: node
+    repo: https://github.com/Mercy5-k/Beyond-the-cover
+    branch: main
     buildCommand: npm install
     startCommand: npm start
-    branch: main
+    plan: free
+    region: oregon
