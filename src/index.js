@@ -313,14 +313,19 @@ async function updateReadingList() {
 
   readingListItems.innerHTML = '';
 
-  readingList.forEach(book => {
-    const li = document.createElement('li');
+ readingList.forEach(book => {
+  const li = document.createElement('li');
+  const imageUrl = book.image || 'https://via.placeholder.com/100x150?text=No+Cover';
 
-    li.innerHTML = `
-      <div class="reading-list-header">
+  li.innerHTML = `
+    <div class="reading-list-header">
+      <img src="${imageUrl}" alt="Cover of ${book.title}" style="height: 100px; margin-right: 10px; float: left; border-radius: 4px;">
+      <div>
         <strong>${book.title}</strong> by ${book.author} (${book.year})
         <button class="toggle-details">Details</button>
       </div>
+      <div style="clear: both;"></div>
+    </div>
       <div class="reading-list-details" style="display: none;">
         <label>Status:
           <select class="status-select">
