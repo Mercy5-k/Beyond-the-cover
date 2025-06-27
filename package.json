@@ -1,12 +1,15 @@
 {
   "name": "beyond-the-cover-api",
   "version": "1.0.0",
-  "description": "Backend for Beyond the Cover - A book explorer app",
   "main": "index.js",
   "scripts": {
-  "start": "node_modules/.bin/json-server --watch db.json --port 10000"
+    "start": "npx --no-install json-server --watch db.json --port 10000"
   },
   "dependencies": {
     "json-server": "^0.17.4"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
+
