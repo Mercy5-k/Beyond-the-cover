@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "npx --no-install json-server --watch db.json --port 10000"
+    "start": "npx --no-install json-server --watch db.json --port 10000",
+     "postinstall": "chmod +x node_modules/.bin/json-server"
   },
   "dependencies": {
     "json-server": "^0.17.4"
