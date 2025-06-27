@@ -89,6 +89,25 @@ main {
   gap: 0.5rem;
 }
 
+#tagline {
+  font-size: 0.9rem;
+  color: rgb(0, 0, 0);
+  font-style: italic;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.header-time {
+  font-size: 0.85rem;
+  color: rgb(3, 0, 0);
+  text-align: right;
+  margin-top: 5px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 input, select, button {
   padding: 0.5rem 0.75rem;
   font-size: 1rem;
@@ -244,7 +263,7 @@ main {
   #trendingBooksContainer {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
-  
+
 html, body {
   height: 100%;
   margin: 0;

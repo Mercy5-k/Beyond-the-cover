@@ -11,6 +11,21 @@ const authMessage = document.getElementById('authMessage');
 
 const JSON_SERVER_URL = 'http://localhost:3000';// Backend REST API URL
 
+const taglines = [
+  "📚 Explore, Reflect, and Reimagine Books",
+  "📖 Where Every Page Matters",
+  "🧠 Feed Your Mind. Free Your Thoughts.",
+  "📘 Your Personal Literary Retreat",
+  "💡 One Book Can Change Everything"
+];
+
+let currentTag = 0;
+setInterval(() => {
+  const taglineEl = document.getElementById("tagline");
+  currentTag = (currentTag + 1) % taglines.length;
+  taglineEl.textContent = taglines[currentTag];
+}, 4000);
+
 let currentUser = null; // Keep track of signed-in user
 
 // Show sign-in form and hide sign-up form when "Sign In" link is clicked
