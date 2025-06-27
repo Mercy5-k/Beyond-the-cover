@@ -20,7 +20,7 @@
         <select id="genreFilter">
           <option value="">All Genres</option>
           <option value="fantasy">Fantasy</option>
-          <option value="romance">Romance</option>
+          <option value="romance">Romance</option> 
           <option value="science_fiction">Science Fiction</option>
           <option value="mystery">Mystery</option>
           <option value="horror">Horror</option>
@@ -62,6 +62,9 @@
     <button type="button" id="signupBtn">Sign Up</button>
   </form>
 
+  <!-- sign out -->
+  <button id="signoutBtn">Sign Out</button>
+
    <!-- area to display authentication messages -->
   <p id="authMessage"></p>
 </div>
@@ -85,8 +88,9 @@
   
     <!-- sidebar for user's reading list -->
     <aside id="readingList">
-      <h2>📚 Your Reading List</h2>
+      <h2>📚 My Reading List</h2>
       <ul id="readingListItems">
+      <p id="readingListMessage"></p> 
       </ul>
     </aside>
   </main>

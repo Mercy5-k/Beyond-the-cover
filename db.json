@@ -1,5 +1,11 @@
 {
-  "user":[],
+  "users": [
+    {
+      "username": "Kinya Mercy",
+      "password": "12345",
+      "id": 1
+    }
+  ],
   "readingList": [
     {
       "id": 1,
@@ -10,13 +16,8 @@
       "year": 2022,
       "status": "Want to Read",
       "note": "",
-      "rating": 0,
-      "image": "assets/Housemaid.jpg"
+      "rating": 1,
+      "imageUrl": "images/no-cover.png"
     }
   ]
 }
-
-
-
-
-

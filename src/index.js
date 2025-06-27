@@ -3,11 +3,16 @@ const searchInput = document.getElementById('searchInput');
 const genreFilter = document.getElementById('genreFilter');
 const booksContainer = document.getElementById('booksContainer');
 const trendingBooksContainer = document.getElementById('trendingBooksContainer');
-const readingListItems = document.getElementById('readingListItems');
+const readingListItems = document.getElementById('readingListItems')
+const readingListMessage = document.getElementById('readingListMessage');
 const toggleThemeBtn = document.getElementById('toggleThemeBtn');
 const signupBtn = document.getElementById('signupBtn');
 const signinBtn = document.getElementById('signinBtn');
 const authMessage = document.getElementById('authMessage');
+const signInLink = document.getElementById('signInLink');
+const signUpLink = document.getElementById('signUpLink');
+const signInForm = document.getElementById('signInForm');
+const signUpForm = document.getElementById('signUpForm');
 
 const JSON_SERVER_URL = 'http://localhost:3000';// Backend REST API URL
 
@@ -28,76 +33,103 @@ setInterval(() => {
 
 let currentUser = null; // Keep track of signed-in user
 
+fetch('http://127.0.0.1:3000/users')
+  .then(res => res.json())
+  .then(users => {
+    if (users.length > 0) {
+      currentUser = users[0];
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+      const authMessage = document.getElementById('authMessage');
+      authMessage.textContent = `Signed in as ${currentUser.username}`;
+      document.getElementById('authContainer').style.display = 'none';
+    } else {
+      // handle no users
+    }
+  })
+  .catch(console.error);
+
 // Show sign-in form and hide sign-up form when "Sign In" link is clicked
-signInLink.addEventListener('click', () => {
+signInForm.classList.toggle('hidden');
+signUpForm.classList.add('hidden');
+authMessage.textContent = '';
+
+// Show sign-up form and hide sign-in form when "Sign Up" link is clicked
+  signInLink.addEventListener('click', () => {
   signInForm.classList.toggle('hidden');
   signUpForm.classList.add('hidden');
   authMessage.textContent = '';
 });
 
-// Show sign-up form and hide sign-in form when "Sign Up" link is clicked
-signUpLink.addEventListener('click', () => {
-  signUpForm.classList.toggle('hidden');
-  signInForm.classList.add('hidden');
-  authMessage.textContent = '';
-});
 
 // Handle sign-up form submission
 signupBtn.addEventListener('click', async () => {
+  console.log('Sign-up clicked');
+
   const username = document.getElementById('signupUsername').value.trim();
   const password = document.getElementById('signupPassword').value;
+  console.log('Attempting signup with:', username, password);
 
-  // Basic validation for empty inputs
   if (!username || !password) {
     authMessage.textContent = 'Please enter both username and password.';
     return;
   }
 
   try {
-     // Check if username already exists in backend
-    const existing = await fetch(`${JSON_SERVER_URL}/users?username=${username}`).then(res => res.json());
+    const existing = await fetch(`${JSON_SERVER_URL}/users?username=${username}`)
+      .then(res => res.json());
+
+    console.log('Existing users:', existing);
+
     if (existing.length > 0) {
       authMessage.textContent = 'Username already exists.';
       return;
     }
 
-     // Create new user via POST request
-    await fetch(`${JSON_SERVER_URL}/users`, {
+    const res = await fetch(`${JSON_SERVER_URL}/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
 
+    if (!res.ok) throw new Error(`Signup failed with status: ${res.status}`);
+
     authMessage.textContent = 'Sign-up successful. You can now sign in.';
     signUpForm.classList.add('hidden');
   } catch (error) {
+    console.error('Sign-up error:', error);
     authMessage.textContent = 'Error signing up. Please try again.';
-    console.error(error);
   }
 });
 
-// Handle sign-in form submission
 signinBtn.addEventListener('click', async () => {
   const username = document.getElementById('signinUsername').value.trim();
   const password = document.getElementById('signinPassword').value;
-
-// Basic validation for empty inputs
+  
   if (!username || !password) {
     authMessage.textContent = 'Please enter both username and password.';
     return;
   }
 
   try {
-    // Query backend for matching username and password
-    const users = await fetch(`${JSON_SERVER_URL}/users?username=${username}&password=${password}`)
-      .then(res => res.json());
+    console.log('Signing in with:', username, password);
 
-    if (users.length > 0) {
-      currentUser = users[0]; // Set current user on successful login
+    const res = await fetch(`${JSON_SERVER_URL}/users?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+    const users = await res.json(); // ✅ users is defined here
+
+    if (users.length > 5) {
+      currentUser = users[5];
+      localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Save for session
       authMessage.textContent = `Signed in as ${currentUser.username}`;
-      document.getElementById('authContainer').style.display = 'none';// Hide auth UI
-      // call your init or load app function here
-      // init();
+      document.getElementById('authContainer').style.display = 'none';
+      
+      if (currentUser) {
+        signoutBtn.style.display = 'inline-block';
+    } else {
+    signoutBtn.style.display = 'none';
+}
+
+      updateReadingList(); // Optional: refresh user's reading list
     } else {
       authMessage.textContent = 'Invalid credentials.';
     }
@@ -209,7 +241,8 @@ async function handleFetchAndRender() {
     trendingBooks.slice(0, 30).forEach(book => {
       const coverUrl = book.coverId
         ? `https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`
-        : 'https://via.placeholder.com/128x193?text=No+Cover';
+        : 'https://placehold.co/128x193?text=No+Cover'
+
 
       const openLibraryUrl = `https://openlibrary.org${book.id}`;
 
@@ -244,7 +277,16 @@ async function handleFetchAndRender() {
 // Fetch the reading list for a specific user from backend
 function fetchReadingList(userId) {
   if (!userId) return Promise.resolve([]);
-  return fetch(`${JSON_SERVER_URL}/readingList?userId=${userId}`).then(res => res.json());
+
+  return fetch(`${JSON_SERVER_URL}/readingList?userId=${userId}`)
+    .then(async res => {
+      if (!res.ok) {
+        const errorText = await res.text();  // Read the raw error (HTML in this case)
+        console.error('Failed to fetch reading list:', res.status, errorText);
+        throw new Error(`Reading list fetch failed with status ${res.status}`);
+      }
+      return res.json();
+    });
 }
 
 // Add a book to the reading list (backend and UI)
@@ -256,27 +298,31 @@ async function handleAddToList(bookId, books) {
 
   const book = books.find(b => b.id === bookId);
   const readingList = await fetchReadingList(currentUser.id);
-
   const alreadyInList = readingList.some(item => item.bookId === bookId);
-  if (alreadyInList) return;
+  if (alreadyInList) {
+    readingListMessage.textContent = 'Book is already in your reading list.';
+    readingListMessage.style.color = 'orange';
+    return;
+  }
 
-  // Create book object with userId for backend
-  const userBook = {
-    userId: currentUser.id,   // Add userId here!
-    bookId: book.id,
-    title: book.title,
-    author: book.author,
-    year: book.year,
-    status: 'Want to Read',
-    note: '',
-    rating: 0
-  };
-
+  // Add book
   await fetch(`${JSON_SERVER_URL}/readingList`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(userBook)
+    body: JSON.stringify({
+      userId: currentUser.id,
+      bookId: book.id,
+      title: book.title,
+      author: book.author,
+      year: book.year,
+      status: 'Want to Read',
+      note: '',
+      rating: 0
+    })
   });
+
+  readingListMessage.textContent = `"${book.title}" added to your reading list!`;
+  readingListMessage.style.color = 'green';
 
   updateReadingList();
   handleFetchAndRender();
@@ -329,95 +375,152 @@ function updateBook(id, updatedFields) {
   });
 }
 
+async function handleAddToList(bookId, books) {
+  if (!currentUser) {
+    alert('Please sign in to add books to your reading list.');
+    return;
+  }
+  const book = books.find(b => b.id === bookId);
+  const readingList = await fetchReadingList(currentUser.id);
+  const alreadyInList = readingList.some(item => item.bookId === bookId);
+  if (alreadyInList) {
+    readingListMessage.textContent = 'Book is already in your reading list.';
+    readingListMessage.style.color = 'orange';
+    return;
+  }
+  // add book
+  await fetch(`${JSON_SERVER_URL}/readingList`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: currentUser.id,
+      bookId: book.id,
+      title: book.title,
+      author: book.author,
+      year: book.year,
+      status: 'Want to Read',
+      note: '',
+      rating: 0
+    })
+  });
+  readingListMessage.textContent = `"${book.title}" added to your reading list!`;
+  readingListMessage.style.color = 'green';
+  updateReadingList();
+  handleFetchAndRender();
+}
+
 // Update the reading list UI based on current user data
 async function updateReadingList() {
-  const readingList = await fetchReadingList(currentUser?.id);
-  console.log('Reading List data:', readingList);
-
-  if (!Array.isArray(readingList)) {
-    console.error('Reading list is not an array:', readingList);
-    readingListItems.innerHTML = '<p>No reading list found.</p>';
+  if (!readingListItems) {
+    console.error('readingListItems element not found in DOM');
     return;
   }
 
-  readingListItems.innerHTML = '';
+  if (!currentUser) {
+    readingListItems.innerHTML = '<p>Please sign in to see your reading list.</p>';
+    return;
+  }
 
- readingList.forEach(book => {
-  const li = document.createElement('li');
-  const imageUrl = book.image || 'https://via.placeholder.com/100x150?text=No+Cover';
+  try {
+    const readingList = await fetchReadingList(currentUser.id);
+    console.log('Reading List data:', readingList);
 
-  li.innerHTML = `
-    <div class="reading-list-header">
-      <img src="${imageUrl}" alt="Cover of ${book.title}" style="height: 100px; margin-right: 10px; float: left; border-radius: 4px;">
-      <div>
-        <strong>${book.title}</strong> by ${book.author} (${book.year})
-        <button class="toggle-details">Details</button>
-      </div>
-      <div style="clear: both;"></div>
-    </div>
-      <div class="reading-list-details" style="display: none;">
-        <label>Status:
-          <select class="status-select">
-            <option ${book.status === 'Want to Read' ? 'selected' : ''}>Want to Read</option>
-            <option ${book.status === 'Reading' ? 'selected' : ''}>Reading</option>
-            <option ${book.status === 'Finished' ? 'selected' : ''}>Finished</option>
-          </select>
-        </label><br/>
-        <label>Note:<br/>
-          <textarea class="note-input" rows="2">${book.note}</textarea>
-        </label><br/>
-        <label>Rating:
-          <input type="number" class="rating-input" value="${book.rating}" min="0" max="5" />
-        </label><br/>
-        <button class="save-btn">Save</button>
-        <button class="remove-btn">Remove</button>
-      </div>
-    `;
+    if (!Array.isArray(readingList) || readingList.length === 0) {
+      readingListItems.innerHTML = '<p>Your reading list is empty.</p>';
+      return;
+    }
 
-    // Toggle the details panel
-    const toggleBtn = li.querySelector('.toggle-details');
-    const details = li.querySelector('.reading-list-details');
-    toggleBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      details.style.display = details.style.display === 'block' ? 'none' : 'block';
-    });
+    readingListItems.innerHTML = ''; // clear previous list
 
-    // Save button triggers PATCH update with new data
-    li.querySelector('.save-btn').addEventListener('click', async () => {
-      const status = li.querySelector('.status-select').value;
-      const note = li.querySelector('.note-input').value;
-      const rating = parseInt(li.querySelector('.rating-input').value);
-      await updateBook(book.id, { status, note, rating });
-    });
+    readingList.forEach(book => {
+      // Construct cover image URL or fallback placeholder
+      const imageUrl = book.coverId
+        ? `https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg`
+        : './images/no-cover.jpg'; 
 
-     // Remove button deletes book from reading list backend & refreshes UI
-    li.querySelector('.remove-btn').addEventListener('click', () => {
-      fetch(`${JSON_SERVER_URL}/readingList/${book.id}`, { method: 'DELETE' })
-        .then(() => updateReadingList());
-    });
+      // Create a container element (li or div) for the book
+      const li = document.createElement('li');
+      li.className = 'reading-list-item';
 
-   
-    // Status dropdown updates backend immediately on change
-    li.querySelector('.status-select').addEventListener('change', (e) => {
-      updateBook(book.id, { status: e.target.value });
-    });
+      li.innerHTML = `
+        <div class="reading-list-header">
+          <img src="${imageUrl}" alt="Cover of ${book.title}" style="height: 100px; margin-right: 10px; float: left; border-radius: 4px;">
+          <div>
+            <strong>${book.title}</strong> by ${book.author} (${book.year})
+            <button class="toggle-details">Details</button>
+          </div>
+          <div style="clear: both;"></div>
+        </div>
+        <div class="reading-list-details" style="display: none;">
+          <label>Status:
+            <select class="status-select">
+              <option ${book.status === 'Want to Read' ? 'selected' : ''}>Want to Read</option>
+              <option ${book.status === 'Reading' ? 'selected' : ''}>Reading</option>
+              <option ${book.status === 'Finished' ? 'selected' : ''}>Finished</option>
+            </select>
+          </label><br/>
+          <label>Note:<br/>
+            <textarea class="note-input" rows="2">${book.note || ''}</textarea>
+          </label><br/>
+          <label>Rating:
+            <input type="number" class="rating-input" value="${book.rating || 0}" min="0" max="5" />
+          </label><br/>
+          <button class="save-btn">Save</button>
+          <button class="remove-btn">Remove</button>
+        </div>
+      `;
 
- // Note updates backend on input (can be optimized to debounce)
-    li.querySelector('.note-input').addEventListener('input', (e) => {
-      updateBook(book.id, { note: e.target.value });
-    });
-
-    // Star rating click
-    li.querySelectorAll('.star-rating .star').forEach(star => {
-      star.addEventListener('click', async (e) => {
-        const rating = parseInt(e.target.dataset.value);
-        await updateBook(book.id, { rating });
-        updateReadingList(); // refresh stars
+      // Toggle details panel
+      const toggleBtn = li.querySelector('.toggle-details');
+      const details = li.querySelector('.reading-list-details');
+      toggleBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        details.style.display = details.style.display === 'block' ? 'none' : 'block';
       });
-    });
 
-    readingListItems.appendChild(li);
-  });
+      // Save button updates backend
+      li.querySelector('.save-btn').addEventListener('click', async () => {
+        const status = li.querySelector('.status-select').value;
+        const note = li.querySelector('.note-input').value;
+        const rating = parseInt(li.querySelector('.rating-input').value, 10);
+        await updateBook(book.id, { status, note, rating });
+      });
+
+      // Remove button deletes book from reading list
+      li.querySelector('.remove-btn').addEventListener('click', async () => {
+        try {
+          await fetch(`${JSON_SERVER_URL}/readingList/${book.id}`, { method: 'DELETE' });
+          readingListMessage.textContent = `"${book.title}" removed from your reading list.`;
+          readingListMessage.style.color = 'green';
+          updateReadingList();
+        } catch {
+          readingListMessage.textContent = 'Failed to remove book.';
+          readingListMessage.style.color = 'red';
+        }
+      });
+
+      // Update backend immediately when status changes
+      li.querySelector('.status-select').addEventListener('change', e => {
+        updateBook(book.id, { status: e.target.value });
+      });
+
+      // Update backend on note input (could debounce)
+      li.querySelector('.note-input').addEventListener('input', e => {
+        updateBook(book.id, { note: e.target.value });
+      });
+
+      // Update backend on rating change
+      li.querySelector('.rating-input').addEventListener('change', e => {
+        const rating = parseInt(e.target.value, 10);
+        updateBook(book.id, { rating });
+      });
+
+      readingListItems.appendChild(li);
+    });
+  } catch (error) {
+    console.error('Error updating reading list:', error);
+    readingListItems.innerHTML = '<p>Failed to load reading list.</p>';
+  }
 }
 
 // Setup event listeners for user inputs and buttons
@@ -432,9 +535,10 @@ function setupEventListeners() {
 // Attach click handlers to "Add to Reading List" buttons dynamically
 function addBookButtons(currentBooks) {
   document.querySelectorAll('.add-to-list-btn').forEach(button => {
-    button.addEventListener('click', (e) => {
+    button.addEventListener('click', async (e) => {
+      e.preventDefault();  // <-- Prevent default behavior (reload)
       const bookId = e.target.dataset.id;
-      handleAddToList(bookId, currentBooks);
+      await handleAddToList(bookId, currentBooks);
     });
   });
 }
@@ -472,6 +576,14 @@ function populateGenreDropdown() {
   });
 }
 
+function signOut() {
+  currentUser = null;
+  localStorage.removeItem('currentUser');
+  authMessage.textContent = 'Signed out.';
+  document.getElementById('authContainer').style.display = 'block';
+  updateReadingList();
+}
+
 // Main initialization: populate genres, fetch and render books, setup listeners
 function init() {
   populateGenreDropdown();
@@ -479,6 +591,14 @@ function init() {
   setupEventListeners();
   updateReadingList();
   renderTrendingBooks();
+}
+
+const savedUser = localStorage.getItem('currentUser');
+if (savedUser) {
+  currentUser = JSON.parse(savedUser);
+  authMessage.textContent = `Signed in as ${currentUser.username}`;
+  document.getElementById('authContainer').style.display = 'none';
+  updateReadingList();
 }
 
 init()
