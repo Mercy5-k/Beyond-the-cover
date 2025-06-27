@@ -4,6 +4,11 @@ Welcome to **Beyond the Cover** — a book lover's dream I brought to life throu
 
 ---
 
+## 🖼️ Preview
+
+![Beyond the Cover Screenshot](images/demo-shot.png)
+
+---
 ## 🌟 Why I Made This
 
 I've always loved stories. But I also love *systems* — which is why I created **Beyond the Cover**.
