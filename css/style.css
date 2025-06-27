@@ -244,6 +244,31 @@ main {
   #trendingBooksContainer {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
+  
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex-grow: 1;
+}
+
+footer {
+  background-color: rgba(255, 255, 255, 0.2); /* transparent */
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-color);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
+}
+
 
 #overlay {
   position: fixed;
